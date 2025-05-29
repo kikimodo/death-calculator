@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Death Calculator - How Long Will You Live?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0a0a0a;
+            color: #f3f4f6;
+        }
+        .blood-red {
+            color: #dc2626;
+        }
+        .bg-blood-red {
+            background-color: #dc2626;
+        }
+        .border-blood-red {
+            border-color: #dc2626;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .countdown-digit {
+            display: inline-block;
+            min-width: 1.5em;
+            text-align: center;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #111;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            border: 1px solid #333;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .life-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #dc2626, #f59e0b, #10b981);
+            border-radius: 4px;
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .life-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0.1) 0%, 
+                rgba(255,255,255,0.3) 50%, 
+                rgba(255,255,255,0.1) 100%);
+            background-size: 200% 100%;
+            animation: shine 2s infinite;
+        }
+        @keyframes shine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .slide-in {
+            animation: slideIn 0.5s forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-black py-4 px-6 flex justify-between items-center border-b border-gray-800">
+        <div class="flex items-center">
+            <span class="text-2xl font-bold blood-red">DeathCalculator.net</span>
+        </div>
+        <div class="hidden md:flex space-x-6">
+            <a href="#calculator" class="hover:text-red-400 transition">Calculator</a>
+            <a href="#tips" class="hover:text-red-400 transition">Tips</a>
+            <a href="#about" class="hover:text-red-400 transition">About</a>
+        </div>
+        <button class="md:hidden text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="py-20 px-6 text-center relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-black to-transparent z-0"></div>
+        <div class="max-w-4xl mx-auto relative z-10">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6">How Long Will You Live? <span class="blood-red">⚰️</span></h1>
+            <p class="text-xl md:text-2xl mb-10 text-gray-300">Take the test. Face the truth. Calculate your death age.</p>
+            <button id="startCalculator" class="bg-blood-red hover:bg-red-700 text-white font-bold py-4 px-8 rounded-full text-lg transition transform hover:scale-105">
+                Start the Calculator
+            </button>
+            <p class="mt-6 text-gray-400">Don't worry, nobody lives forever.</p>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent opacity-30"></div>
+    </section>
+
+    <!-- Stats Sidebar -->
+    <div class="fixed right-0 top-1/2 transform -translate-y-1/2 bg-gray-900 bg-opacity-80 backdrop-blur-sm p-4 rounded-l-lg border-l border-t border-b border-gray-700 hidden md:block">
+        <div class="space-y-6">
+            <div>
+                <h3 class="text-sm uppercase tracking-wider text-gray-400 mb-2">Global Stats</h3>
+                <p class="text-lg"><span class="blood-red">⚡</span> Avg. lifespan: <span class="font-bold">73.2</span> years</p>
+                <p class="text-lg"><span class="blood-red">💀</span> Deaths today: <span id="deathCounter" class="font-bold pulse">142,000+</span></p>
+            </div>
+            <div>
+                <h3 class="text-sm uppercase tracking-wider text-gray-400 mb-2">Your Time</h3>
+                <div id="countdownDisplay" class="text-lg">
+                    <span class="blood-red">⏳</span> <span id="daysLeft">--</span> days left
+                </div>
+            </div>
+            <div class="text-xs text-gray-500 italic">Based on average life expectancy</div>
+        </div>
+    </div>
+
+    <!-- Calculator Section -->
+    <section id="calculator" class="py-16 px-6 max-w-3xl mx-auto hidden">
+        <div class="bg-gray-900 rounded-xl p-6 md:p-8 border border-gray-800 shadow-xl">
+            <h2 class="text-3xl font-bold mb-6 text-center blood-red">Death Calculator</h2>
+            <p class="text-gray-400 mb-8 text-center">Answer honestly. Your life depends on it.</p>
+            
+            <form id="deathForm" class="space-y-8">
+                <!-- Question 1 -->
+                <div class="question-group slide-in">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-lg font-medium">How old are you?</label>
+                        <span id="ageValue" class="text-gray-400">30</span>
+                    </div>
+                    <input type="range" id="age" name="age" min="18" max="100" value="30" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>18</span>
+                        <span>100</span>
+                    </div>
+                </div>
+                
+                <!-- Question 2 -->
+                <div class="question-group slide-in" style="animation-delay: 0.1s">
+                    <label class="text-lg font-medium block mb-3">Do you smoke?</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="smoking" value="heavy" class="form-radio text-red-600">
+                            <span class="ml-2">Heavy smoker (1+ packs/day)</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="smoking" value="light" class="form-radio text-red-600">
+                            <span class="ml-2">Light smoker</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="smoking" value="none" checked class="form-radio text-red-600">
+                            <span class="ml-2">Non-smoker</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Question 3 -->
+                <div class="question-group slide-in" style="animation-delay: 0.2s">
+                    <label class="text-lg font-medium block mb-3">Alcohol consumption:</label>
+                    <select name="alcohol" class="w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="heavy">Heavy (daily or binge drinking)</option>
+                        <option value="moderate">Moderate (few times a week)</option>
+                        <option value="light" selected>Light (occasionally)</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
+                
+                <!-- Question 4 -->
+                <div class="question-group slide-in" style="animation-delay: 0.3s">
+                    <label class="text-lg font-medium block mb-3">Exercise per week:</label>
+                    <select name="exercise" class="w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="none">None</option>
+                        <option value="light">Light (1-2 hours)</option>
+                        <option value="moderate" selected>Moderate (3-5 hours)</option>
+                        <option value="heavy">Heavy (6+ hours)</option>
+                    </select>
+                </div>
+                
+                <!-- Question 5 -->
+                <div class="question-group slide-in" style="animation-delay: 0.4s">
+                    <label class="text-lg font-medium block mb-3">Average sleep per night:</label>
+                    <select name="sleep" class="w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="low">Less than 6 hours</option>
+                        <option value="medium" selected>6-8 hours</option>
+                        <option value="high">More than 8 hours</option>
+                    </select>
+                </div>
+                
+                <!-- Question 6 -->
+                <div class="question-group slide-in" style="animation-delay: 0.5s">
+                    <label class="text-lg font-medium block mb-3">Stress level:</label>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-gray-400">Low</span>
+                        <input type="range" name="stress" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                        <span class="text-gray-400">High</span>
+                    </div>
+                </div>
+                
+                <!-- Question 7 -->
+                <div class="question-group slide-in" style="animation-delay: 0.6s">
+                    <label class="text-lg font-medium block mb-3">Diet quality:</label>
+                    <select name="diet" class="w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="poor">Poor (fast food, processed)</option>
+                        <option value="average" selected>Average (mixed)</option>
+                        <option value="good">Good (mostly whole foods)</option>
+                        <option value="excellent">Excellent (balanced, nutrient-rich)</option>
+                    </select>
+                </div>
+                
+                <!-- Question 8 -->
+                <div class="question-group slide-in" style="animation-delay: 0.7s">
+                    <label class="text-lg font-medium block mb-3">Family history of longevity:</label>
+                    <select name="family" class="w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="poor">Most died before 70</option>
+                        <option value="average" selected>Average (70-80)</option>
+                        <option value="good">Many lived to 80+</option>
+                        <option value="excellent">Several lived to 90+</option>
+                    </select>
+                </div>
+                
+                <!-- Question 9 -->
+                <div class="question-group slide-in" style="animation-delay: 0.8s">
+                    <label class="text-lg font-medium block mb-3">Do you have chronic health conditions?</label>
+                    <div class="flex space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="conditions" value="heart" class="form-checkbox text-red-600">
+                            <span class="ml-2">Heart disease</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="conditions" value="diabetes" class="form-checkbox text-red-600">
+                            <span class="ml-2">Diabetes</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="conditions" value="cancer" class="form-checkbox text-red-600">
+                            <span class="ml-2">Cancer</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input
+</html>
